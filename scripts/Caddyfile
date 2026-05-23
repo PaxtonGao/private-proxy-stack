@@ -1,0 +1,47 @@
+# Caddy subscription server.
+# Serves /sub/<32 hex token>/{v2ray.txt,singbox.json} based on User-Agent.
+# Cert via Let's Encrypt HTTP-01 on port 80 (tls-alpn-01 cannot bind 443 - sing-box owns it).
+
+{
+    admin off
+    auto_https disable_redirects
+}
+
+<DUCKDNS_SUBDOMAIN>.duckdns.org:8443 {
+    root * /opt/proxy-sub/sub
+    log {
+        output discard
+    }
+
+    @valid path_regexp valid ^/sub/([a-f0-9]{32})$
+
+    handle @valid {
+        @shadowrocket header User-Agent *Shadowrocket*
+        @hiddify header User-Agent *Hiddify*
+
+        handle @shadowrocket {
+            rewrite * /{re.valid.1}/v2ray.txt
+            file_server
+        }
+        handle @hiddify {
+            rewrite * /{re.valid.1}/singbox.json
+            file_server
+        }
+        handle {
+            rewrite * /{re.valid.1}/v2ray.txt
+            file_server
+        }
+    }
+
+    handle {
+        respond 404
+    }
+}
+
+:80 {
+    log {
+        output discard
+    }
+    respond /.well-known/acme-challenge/* 200
+    respond 404
+}

@@ -1,0 +1,14 @@
+[Unit]
+Description=Proxy Manager Bot
+After=network-online.target sing-box.service
+
+[Service]
+Type=simple
+ExecStart=/opt/proxy-bot/venv/bin/python /opt/proxy-bot/bot.py
+Restart=on-failure
+RestartSec=10
+User=root
+WorkingDirectory=/opt/proxy-bot
+
+[Install]
+WantedBy=multi-user.target
